@@ -13,6 +13,11 @@ setup(
         'apache-beam[gcp]',
         'pymssql',
         'pyodbc',
-        'oracledb'
+        'oracledb',
+        'google-cloud-storage',
+        'google-cloud-bigquery',
+        'pandas',
+        'fsspec',
+        'gcsfs'
     ],
 )
