@@ -1,0 +1,34 @@
+# Archivos temporales
+*.pyc
+*.pyo
+.pytest_cache
+.venv
+.DS_Store
+
+# Archivos de configuración
+.env
+.gitattributes
+.editorconfig
+
+# Archivos de datos
+.csv
+
+# Binarios de instalacion
+*.rpm
+*.deb
+
+# Archivos de depuración
+*.pdb
+*.ilk
+*.ncb
+*.ipdb
+
+# Archivos de terceros
+node_modules
+bower_components
+
+# Ignorar directorios de checkpoints de Jupyter Notebook
+.ipynb_checkpoints/
+
+# Ignorar directorios que inicien con el nombre dataflow_pipeline_dependencies
+dataflow_pipeline_dependencies/
