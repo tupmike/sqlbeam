@@ -1,5 +1,5 @@
 # DOCUMENTACION PARA EL MODULO sqlbeam
-Este modulo se importa desde los **archivos base de codigo** desde donde se realizan las operaciones con apache beam ejemplo: **beam_emea_as400_v1.6.py**, **beam_mex_tnet_v1.7.py**, etc.
+Este modulo se importa desde los **archivos base de codigo** desde donde se realizan las operaciones con apache beam.
 
 * **__init__.py**
     * archivo que identifica un directorio como módulo importable
@@ -11,10 +11,10 @@ Este modulo se importa desde los **archivos base de codigo** desde donde se real
     * archivo que contiene la implementacion para cada sistema (AS400,ORACLE,MSSQL, etc), maneja el proceso en particular
 
 # CONFIGURACION DEL ENTORNO PARA BASES DE DATOS AS400, ORACLE Y MSSQL
-Estas mismas instrucciones vienen configuradas en el archivo **setup.py**, para el uso en los workers
+Estas mismas instrucciones vienen configuradas en el archivo **setup.py** del pipeline, para el uso en los workers
     
 ```
-pip install apache-beam[gcp] google-cloud google-cloud-bigquery pandas fsspec gcsfs
+pip install apache-beam[gcp] google-cloud-storage google-cloud-bigquery pandas fsspec gcsfs
 
 pip install pyodbc oracledb pymssql
 
