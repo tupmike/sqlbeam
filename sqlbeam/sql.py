@@ -326,7 +326,7 @@ class PaginateQueryDoFn(beam.DoFn):
                 logging.info(ex)
                 print(ex)
                 queries.append(query)
-            # queries = sorted(list(set(queries)))
+            queries = sorted(list(set(queries)))
             print("paginated queries:")
             print(queries)
             logging.info("paginated queries:")

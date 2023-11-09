@@ -273,8 +273,12 @@ class AS400Wrapper(BaseWrapper):
     
     @staticmethod
     def paginated_query(query, limit, offset, primary_key=1):
-        query = query.strip(";")
-        pag_query = f"{query} ORDER BY {primary_key} OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY"
+        if primary_key == 'NO_PAGINATE':
+            query = query.strip(";")
+            pag_query = f"{query}"
+        else:
+            query = query.strip(";")
+            pag_query = f"{query} ORDER BY {primary_key} OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY"
         return pag_query
 
     def total_rows(self, query):
