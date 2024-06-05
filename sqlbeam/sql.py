@@ -14,8 +14,10 @@ from apache_beam.io.range_trackers import OffsetRangeTracker
 from apache_beam.transforms.display import DisplayDataItem
 from apache_beam import coders
 import os
+import sys
 import requests
 import logging
+from urllib.parse import quote_plus,unquote
 
 try:
     from apitools.base.py.exceptions import HttpError
@@ -98,7 +100,7 @@ class SQLSouceInput(object):
         self.host = host
         self.port = port
         self.username = username
-        self.password = password
+        self.password = quote_plus(password)
         self.batch = batch
         self.autocommit = autocommit
         if wrapper in [BaseWrapper, MSSQLWrapper, AS400Wrapper, OracleWrapper]:
@@ -150,10 +152,12 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
         if self.wrapper == MSSQLWrapper:
             import pymssql
             print('Validation pass:',self.password)
-            _connection = pymssql.connect(host=self.host,
-                                        user=self.username,
-                                        password=self.password,
-                                        database=self.database)
+            print('Validation pass:',unquote(self.password))
+            # _connection = pymssql.connect(host=self.host,
+            #                             user=self.username,
+            #                             password=unquote(self.password),
+            #                             database=self.database)
+            sys.exit("DEBUG")
         elif self.wrapper == AS400Wrapper:
             import pyodbc
             _connection = pyodbc.connect(
