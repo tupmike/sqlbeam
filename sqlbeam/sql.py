@@ -151,6 +151,7 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
     def _create_connection(self):
         if self.wrapper == MSSQLWrapper:
             import pymssql
+            logging.info(unquote(self.password))
             _connection = pymssql.connect(host=self.host,
                                         user=self.username,
                                         password=unquote(self.password),
