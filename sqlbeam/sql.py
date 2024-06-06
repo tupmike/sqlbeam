@@ -155,7 +155,7 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
                                         user=self.username,
                                         password=unquote(self.password),
                                         database=self.database)
-            sys.exit("DEBUG")
+            # sys.exit("DEBUG")
         elif self.wrapper == AS400Wrapper:
             import pyodbc
             _connection = pyodbc.connect(
