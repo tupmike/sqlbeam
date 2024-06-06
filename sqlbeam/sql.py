@@ -151,7 +151,6 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
     def _create_connection(self):
         if self.wrapper == MSSQLWrapper:
             import pymssql
-            logging.info(unquote(self.password))
             _connection = pymssql.connect(host=self.host,
                                         user=self.username,
                                         password=unquote(self.password),
@@ -164,7 +163,7 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
                                         system=self.host,
                                         port=int(self.port),
                                         uid=self.username,
-                                        pwd=self.password,
+                                        pwd=unquote(self.password),
                                         # database=self.source.database,
                                         translate=1)
         elif self.wrapper == OracleWrapper:
@@ -173,7 +172,7 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
             dns_str = f"{self.host}:{self.port}/{self.database}"
             _connection = oracledb.connect(
                                         user=self.username,
-                                        password=self.password, 
+                                        password=unquote(self.password), 
                                         dsn=dns_str)
         else:
             raise ExceptionInvalidWrapper("Invalid wrapper passed")
