@@ -151,12 +151,10 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
     def _create_connection(self):
         if self.wrapper == MSSQLWrapper:
             import pymssql
-            logging.info('Validation pass:',self.password)
-            logging.info('Validation pass:',unquote(self.password))
-            # _connection = pymssql.connect(host=self.host,
-            #                             user=self.username,
-            #                             password=unquote(self.password),
-            #                             database=self.database)
+            _connection = pymssql.connect(host=self.host,
+                                        user=self.username,
+                                        password=unquote(self.password),
+                                        database=self.database)
             sys.exit("DEBUG")
         elif self.wrapper == AS400Wrapper:
             import pyodbc
