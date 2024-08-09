@@ -8,16 +8,11 @@ setup(
     author_email='luissalazar@tupperware.com',
     url='https://github.com/tupmike/sqlbeam.git',
     packages=['sqlbeam'],
-    python_requires='>=3.8',
+    python_requires='>=3.10',
     install_requires=[
         'apache-beam[gcp]',
         'pymssql',
         'pyodbc',
-        'oracledb',
-        'google-cloud-storage',
-        'google-cloud-bigquery',
-        'pandas',
-        'fsspec',
-        'gcsfs'
+        'oracledb'
     ],
 )
