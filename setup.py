@@ -8,7 +8,7 @@ setup(
     author_email='luissalazar@tupperware.com',
     url='https://github.com/tupmike/sqlbeam.git',
     packages=['sqlbeam'],
-    python_requires='>=3.10',
+    python_requires='>=3.8',
     install_requires=[
         'apache-beam[gcp]',
         'pymssql',
