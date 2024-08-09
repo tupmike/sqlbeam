@@ -1,5 +1,5 @@
 """
-    This contains code for MSSQL, AS400 and Oracle sql database sql commands wrappers
+    This contains code for MSSQL, AS400 and Oracle database sql commands wrappers
 """
 import datetime
 import decimal
@@ -346,7 +346,7 @@ class OracleWrapper(BaseWrapper):
         query = query.strip(";")
         pag_query = f"{query} ORDER BY {primary_key} OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY"
         return pag_query
-
+    
     def total_rows(self, query):
         row_count_query = f"SELECT COUNT(1) AS row_count FROM ({query})"
         print(f'''row count query: {row_count_query}''')
@@ -377,3 +377,43 @@ class OracleWrapper(BaseWrapper):
             # else:
             #     row_dict[column[0]] = row[index]
         return row_dict
+    
+    @staticmethod
+    def julian_date_sub_days(julian_date, days_sub):
+        from datetime import datetime,timedelta
+        # formato de fecha juliana ###### ejemplo 124216 => C-YY-DDD
+        # Tratamiento a fecha juliana
+        julian_date_str = str(julian_date)[-5:]
+        extract_date = datetime.strptime(julian_date_str, '%y%j').date()
+        logging.info('extract_date:')
+        logging.info(extract_date)
+        # Calculo de nueva fecha
+        days = timedelta(days=days_sub)
+        subtract_date = extract_date-days
+        logging.info('subtract_date:')
+        logging.info(subtract_date)
+        # Construccion de la nueva fecha julian_datea
+        subtract_date_tuple = subtract_date.timetuple()
+        jcent = str(julian_date)[0:1]
+        jyear = str(subtract_date_tuple.tm_year)[-2:]
+        jdays = str(subtract_date_tuple.tm_yday)
+        start_date = int(jcent+jyear+jdays)
+        end_date = julian_date
+        # Retorna amnbas fechas
+        return [start_date,end_date]
+    
+    @staticmethod
+    def build_query(julian_date, days_sub, query, schema):
+        # Tratamiento de schema
+        cols = ','.join(item.split(':')[0] for item in schema.split(','))
+        # Tratamiendo de query
+        query_base = query.upper().split(' FROM ')
+        db_table = query_base[1]
+        field_ref = query_base[0].upper().split(' AS ')[1]
+        # Tratamiento a fecha
+        date_list = OracleWrapper.julian_date_sub_days(julian_date, days_sub)
+        start_date = date_list[0]
+        end_date = date_list[1]
+        # Construccion de query
+        query_incremental = f"SELECT {cols} FROM {db_table} WHERE {field_ref} BETWEEN {start_date} AND {end_date}"
+        return query_incremental

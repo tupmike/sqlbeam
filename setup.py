@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='sqlbeam',
-    version='1.0.0',
+    version='2.0.0',
     description='Module for using different sql engines with apache beam',
     author='Luis Miguel Salazar E',
     author_email='luissalazar@tupperware.com',

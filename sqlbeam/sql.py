@@ -1,5 +1,5 @@
 """
-This module implements the bounded source for Postgres read
+This module implements the bounded source for DataBases read
 
 
 TODO://
@@ -35,6 +35,7 @@ from .exceptions import ExceptionInvalidWrapper
 JSON_COMPLIANCE_ERROR = 'NAN, INF and -INF values are not JSON compliant.'
 AUTO_COMMIT = False
 READ_BATCH = 500000
+EXTRACT_DAYS = 7
 
 def default_encoder(obj):
     if isinstance(obj, decimal.Decimal):
@@ -64,7 +65,7 @@ class RowAsDictJsonCoder(coders.Coder):
         return json.loads(encoded_table_row.decode('utf-8'))
 
 class SQLSouceInput(object):
-    def __init__(self, host=None, port=None, username=None, password=None,
+    def __init__(self, host=None, port=None, username=None, password=None, range_days=EXTRACT_DAYS, schema_str=None,
                  database=None, table=None, query=None, primary_key=None, sql_url=None, sql_url_auth_header=None,
                  validate=False, coder=None, batch=READ_BATCH, autocommit=AUTO_COMMIT, wrapper=MSSQLWrapper, schema_only=False, *args, **kwargs):
         """
@@ -86,7 +87,7 @@ class SQLSouceInput(object):
         :param wrapper: which wrapper to use, mysql or postgres
         :param schema_only: return schema or data
         """
-
+        
         self.database = database
         self.validate = validate
         self.coder = coder or RowAsDictJsonCoder()
@@ -94,6 +95,8 @@ class SQLSouceInput(object):
         # connection
         self.table = table
         self.query = query
+        self.schema_str = schema_str
+        self.range_days = range_days
         self.primary_key = primary_key
         self.sql_url = sql_url
         self.sql_url_auth_header = sql_url_auth_header
@@ -115,7 +118,7 @@ class SQLSouceInput(object):
 
         self.runtime_params = ['host', 'port', 'username', 'password', 'database',
                                'table', 'query', 'primary_key','sql_url', 'sql_url_auth_header',
-                               'batch', 'schema_only']
+                               'batch', 'schema_only','range_days','schema_str']
 
     @staticmethod
     def _build_value(source, keys):
@@ -298,57 +301,49 @@ class SQLSource(SQLSouceInput, beam.io.iobase.BoundedSource):
             else:
                 raise Exception("Could not successfully download data from {}, text, {}, status: {}".format(url, res.text, res.status_code))
 
-class PaginateQueryDoFn(beam.DoFn):
+def prep_query(source, query):
+    primary_key = source.primary_key
+    batch = source.batch
+    queries = []
+    row_count = source.client.total_rows(query)
+    logging.info(f"number of rows to process: {row_count}")
+    offsets = list(range(0, row_count, batch))
+    for offset in offsets:
+        paginated_query = source.client.paginated_query(query, batch, offset, primary_key)
+        queries.append(paginated_query)
+    queries = sorted(list(set(queries)))
+    logging.info("paginated queries:")
+    logging.info(queries)
+    return queries
+
+class BuildQueryDoFn(beam.DoFn):
         def __init__(self, *args, **kwargs):
             self.args = args
-            logging.info(f"pagination query do fn wrapper:{kwargs['wrapper']}")
-            
             self.kwargs = kwargs
-
-        def process(self, query, *args):
+            
+        def process(self, *args):
             source = SQLSource(*self.args, **self.kwargs)
             SQLSouceInput._build_value(source, source.runtime_params)
-            print(f"we're in the process method now; source.client: {source.client}")
-            logging.info(f"we're in the process method now; source.client: {source.client}")
-            
+            logging.info("we're in the process method now")
             query = source.query
             primary_key = source.primary_key
             batch = source.batch
-            
-            row_count = 0
-            queries = []
-            try:
-                row_count = source.client.total_rows(query)
-                print(f"number of rows to process: {row_count}")
-                logging.info(f"number of rows to process: {row_count}")
-                offsets = list(range(0, row_count, batch))
-                for offset in offsets:
-                    paginated_query = source.client.paginated_query(query, batch, offset, primary_key)
-                    queries.append(paginated_query)
-            except Exception as ex:
-                logging.info(ex)
-                print(ex)
-                queries.append(query)
-            queries = sorted(list(set(queries)))
-            print("paginated queries:")
-            print(queries)
-            logging.info("paginated queries:")
-            logging.info(queries)
-            return queries
+            if 'MAX' in query.upper() and ',' not in query.upper() and isinstance(source.client,OracleWrapper):
+                for records, schema in source.client.read(query):
+                    def_date = records[0][0]
+                full_query = source.client.build_query(def_date,source.range_days,query,source.schema_str)
+                queries = prep_query(source,full_query)
+                return queries
+            else:
+                queries = prep_query(source,query)
+                return queries
 
 class SQLSourceDoFn(beam.DoFn):
-    """
-        This needs to be called as beam.io.Read(SQLSource(*arguments))
-        TODO://
-        1. To accept dsn or connection string
-    """
-
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
     def process(self, query, *args, **kwargs):
-        """Implements :class:`~apache_beam.io.iobase.BoundedSource.read`"""
         source = SQLSource(*self.args, **self.kwargs)
         SQLSouceInput._build_value(source, source.runtime_params)
         self.source = source
@@ -359,7 +354,6 @@ class SQLSourceDoFn(beam.DoFn):
 class ReadFromSQL(beam.PTransform):
     def __init__(self, *args, **kwargs):
         self.source = SQLSouceInput(*args, **kwargs)
-        # logging.info(f"from inside the readFromSQL class, source: {self.source.wrapper}")
         self.args = args
         self.kwargs = kwargs
 
@@ -367,7 +361,7 @@ class ReadFromSQL(beam.PTransform):
         "now expanding!!!"
         return (pcoll.pipeline
                 | 'UserQuery' >> beam.Create([1])
-                | 'SplitQuery' >> beam.ParDo(PaginateQueryDoFn(*self.args, **self.kwargs))
-                | 'reshuffle' >> Reshuffle()
+                | 'BuildQuery' >> beam.ParDo(BuildQueryDoFn(*self.args, **self.kwargs))
+                | 'Reshuffle' >> Reshuffle()
                 | 'Read' >> beam.ParDo(SQLSourceDoFn(*self.args, **self.kwargs))
                 )
