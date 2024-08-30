@@ -316,6 +316,10 @@ class OracleWrapper(BaseWrapper):
     """Oracle client wrapper with utilities for querying.
     """
     
+    @retry.with_exponential_backoff(
+        num_retries=MAX_RETRIES,
+        initial_delay_secs=60*5,
+        retry_filter=retry.retry_on_server_errors_and_timeout_filter)
     def read(self, query, batch=READ_BATCH):
         """
             Execute the query and return the result in batch
@@ -332,6 +336,7 @@ class OracleWrapper(BaseWrapper):
             :param batch: size of batch to read
             :return: iterator of records in batch
         """
+        self.connection.call_timeout = 1000*60*5
         with self.connection.cursor() as cursor:
             logging.info(f"Executing Read query: {query}")
             print(f"Executing Read query: {query}")
