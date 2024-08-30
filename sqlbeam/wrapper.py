@@ -17,7 +17,9 @@ except ImportError:
 import apache_beam as beam
 from .exceptions import ExceptionNoColumns, ExceptionBadRow, ExceptionInvalidWrapper
 
-MAX_RETRIES = 5
+MAX_RETRIES = 2
+DELAY_RETRY = 60*2
+CONN_TIMEOUT = 1000*60*2
 DATETIME_FMT = '%Y-%m-%d %H:%M:%S.%f UTC'
 READ_BATCH = 500000
 
@@ -318,7 +320,7 @@ class OracleWrapper(BaseWrapper):
     
     @retry.with_exponential_backoff(
         num_retries=MAX_RETRIES,
-        initial_delay_secs=60*5,
+        initial_delay_secs=DELAY_RETRY,
         retry_filter=retry.retry_on_server_errors_and_timeout_filter)
     def read(self, query, batch=READ_BATCH):
         """
@@ -336,7 +338,7 @@ class OracleWrapper(BaseWrapper):
             :param batch: size of batch to read
             :return: iterator of records in batch
         """
-        self.connection.call_timeout = 1000*60*5
+        self.connection.call_timeout = CONN_TIMEOUT
         with self.connection.cursor() as cursor:
             logging.info(f"Executing Read query: {query}")
             print(f"Executing Read query: {query}")
