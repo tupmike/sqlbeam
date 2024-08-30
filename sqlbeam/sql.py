@@ -308,9 +308,12 @@ def prep_query(source, query):
     row_count = source.client.total_rows(query)
     logging.info(f"number of rows to process: {row_count}")
     offsets = list(range(0, row_count, batch))
-    for offset in offsets:
-        paginated_query = source.client.paginated_query(query, batch, offset, primary_key)
-        queries.append(paginated_query)
+    if len(offsets) == 1:
+        queries.append(query)
+    else:
+        for offset in offsets:
+            paginated_query = source.client.paginated_query(query, batch, offset, primary_key)
+            queries.append(paginated_query)
     queries = sorted(list(set(queries)))
     logging.info("paginated queries:")
     logging.info(queries)

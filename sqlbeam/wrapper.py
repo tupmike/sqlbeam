@@ -18,8 +18,8 @@ import apache_beam as beam
 from .exceptions import ExceptionNoColumns, ExceptionBadRow, ExceptionInvalidWrapper
 
 MAX_RETRIES = 2
-DELAY_RETRY = 60*2
-CONN_TIMEOUT = 1000*60*2
+DELAY_RETRY = 60*5
+CONN_TIMEOUT = 1000*60*5
 DATETIME_FMT = '%Y-%m-%d %H:%M:%S.%f UTC'
 READ_BATCH = 500000
 
