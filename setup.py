@@ -10,9 +10,6 @@ setup(
     packages=['sqlbeam'],
     python_requires='>=3.8',
     install_requires=[
-        'apache-beam[gcp]',
-        'pymssql',
-        'pyodbc',
-        'oracledb'
+        'apache-beam[gcp]'
     ],
 )
